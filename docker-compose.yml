@@ -1,0 +1,19 @@
+services:
+
+  backend:
+    build:
+      context: ./backend
+    image: otto-coffee-backend:1.0
+    container_name: otto-backend-v1.0
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build:
+      context: ./frontend
+    image: otto-coffee-frontend:1.0
+    container_name: otto-frontend-v1.0
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
