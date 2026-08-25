@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const { Pool } = require("pg");
 
 const app = express();
 
@@ -11,96 +12,20 @@ const PORT = 3000;
 // ===============================
 
 app.use(cors());
-
 app.use(express.json());
 
 
 // ===============================
-// COFFEE DATA
+// POSTGRESQL
 // ===============================
 
-const coffees = [
-
-    {
-        id: 1,
-        name: "Espresso",
-        description:
-            "Rich, bold and perfectly balanced.",
-        price: 2.00,
-        icon: "☕"
-    },
-
-
-    {
-        id: 2,
-        name: "Cappuccino",
-        description:
-            "Smooth espresso with creamy milk foam.",
-        price: 3.20,
-        icon: "🥛"
-    },
-
-
-    {
-        id: 3,
-        name: "Caffe Latte",
-        description:
-            "Silky steamed milk with a double espresso.",
-        price: 3.50,
-        icon: "☕"
-    },
-
-
-    {
-        id: 4,
-        name: "Mocha",
-        description:
-            "Chocolate, espresso and steamed milk.",
-        price: 3.80,
-        icon: "🍫"
-    },
-
-
-    {
-        id: 5,
-        name: "Flat White",
-        description:
-            "Velvety microfoam with a strong espresso base.",
-        price: 3.40,
-        icon: "☕"
-    },
-
-
-    {
-        id: 6,
-        name: "Americano",
-        description:
-            "Espresso balanced with hot water.",
-        price: 2.50,
-        icon: "🫘"
-    },
-
-
-    {
-        id: 7,
-        name: "Caramel Latte",
-        description:
-            "Creamy latte with sweet caramel.",
-        price: 3.90,
-        icon: "🍮"
-    },
-
-
-    {
-        id: 8,
-        name: "Cold Brew",
-        description:
-            "Slow brewed for a smooth and refreshing taste.",
-        price: 4.00,
-        icon: "🧊"
-    }
-
-];
+const pool = new Pool({
+    host: process.env.DB_HOST || "postgres",
+    port: process.env.DB_PORT || 5432,
+    user: process.env.DB_USER || "postgres",
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME || "ottocoffee"
+});
 
 
 // ===============================
@@ -110,11 +35,8 @@ const coffees = [
 app.get("/", (req, res) => {
 
     res.json({
-
         message: "Otto Coffee API is running ☕🐈‍⬛",
-
-        version: "1.0.0"
-
+        version: "1.1.0"
     });
 
 });
@@ -124,9 +46,25 @@ app.get("/", (req, res) => {
 // GET ALL COFFEES
 // ===============================
 
-app.get("/api/coffees", (req, res) => {
+app.get("/api/coffees", async (req, res) => {
 
-    res.json(coffees);
+    try {
+
+        const result = await pool.query(
+            "SELECT * FROM coffee ORDER BY id"
+        );
+
+        res.json(result.rows);
+
+    } catch (error) {
+
+        console.error("Database error:", error);
+
+        res.status(500).json({
+            error: "Database error"
+        });
+
+    }
 
 });
 
@@ -135,28 +73,36 @@ app.get("/api/coffees", (req, res) => {
 // GET ONE COFFEE
 // ===============================
 
-app.get("/api/coffees/:id", (req, res) => {
+app.get("/api/coffees/:id", async (req, res) => {
 
-    const id = Number(req.params.id);
+    try {
 
+        const id = Number(req.params.id);
 
-    const coffee = coffees.find(
-        coffee => coffee.id === id
-    );
+        const result = await pool.query(
+            "SELECT * FROM coffee WHERE id = $1",
+            [id]
+        );
 
+        if (result.rows.length === 0) {
 
-    if (!coffee) {
+            return res.status(404).json({
+                error: "Coffee not found"
+            });
 
-        return res.status(404).json({
+        }
 
-            error: "Coffee not found"
+        res.json(result.rows[0]);
 
+    } catch (error) {
+
+        console.error("Database error:", error);
+
+        res.status(500).json({
+            error: "Database error"
         });
 
     }
-
-
-    res.json(coffee);
 
 });
 
@@ -189,15 +135,37 @@ app.get("/api/about", (req, res) => {
 // HEALTH CHECK
 // ===============================
 
-app.get("/api/health", (req, res) => {
+app.get("/api/health", async (req, res) => {
 
-    res.json({
+    try {
 
-        status: "ok",
+        await pool.query("SELECT 1");
 
-        service: "otto-coffee-backend"
+        res.json({
 
-    });
+            status: "ok",
+
+            service: "otto-coffee-backend",
+
+            database: "connected"
+
+        });
+
+    } catch (error) {
+
+        console.error("Database connection error:", error);
+
+        res.status(500).json({
+
+            status: "error",
+
+            service: "otto-coffee-backend",
+
+            database: "disconnected"
+
+        });
+
+    }
 
 });
 
@@ -209,7 +177,7 @@ app.get("/api/health", (req, res) => {
 app.listen(PORT, () => {
 
     console.log(
-        `☕🐈‍⬛ Otto Coffee API running on http://localhost:${PORT}`
+        `☕🐈‍⬛ Otto Coffee API running on port ${PORT}`
     );
 
 });

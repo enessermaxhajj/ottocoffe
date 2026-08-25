@@ -1,0 +1,46 @@
+backend:
+  replicaCount: 1
+
+  image:
+    repository: enessermaxhaj/enescoffe-backend
+    tag: "1.1"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+
+
+frontend:
+  replicaCount: 1
+
+  image:
+    repository: enessermaxhaj/enescoffe-frontend
+    tag: "1.2"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 80
+    targetPort: 80
+    nodePort: 30080
+
+
+postgres:
+  replicaCount: 1
+
+  image:
+    repository: postgres
+    tag: "17"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 5432
+    targetPort: 5432
+
+  storage:
+    size: 1Gi
+    accessMode: ReadWriteOnce
+    storageClass: local-path
