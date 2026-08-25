@@ -5,23 +5,21 @@ on:
     branches:
       - main
 
-  pull_request:
-    branches:
-      - main
-
-
 jobs:
-
-  build-and-push:
+  build-push-update:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
 
-      # 1. Merr kodin nga GitHub
+      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
-
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # 2. Login në Docker Hub
       - name: Login to Docker Hub
@@ -30,32 +28,51 @@ jobs:
           username: ${{ vars.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # 3. Krijo tag nga commit SHA
+      - name: Set image tag
+        run: |
+          echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      # 3. Build backend
+      # 4. Build backend
       - name: Build backend image
         run: |
           docker build \
-            -t ${{ vars.DOCKER_USERNAME }}/otto-coffee-backend:1.0 \
+            -t ${{ vars.DOCKER_USERNAME }}/enescoffe-backend:${IMAGE_TAG} \
             ./backend
 
-
-      # 4. Build frontend
+      # 5. Build frontend
       - name: Build frontend image
         run: |
           docker build \
-            -t ${{ vars.DOCKER_USERNAME }}/otto-coffee-frontend:1.0 \
+            -t ${{ vars.DOCKER_USERNAME }}/enescoffe-frontend:${IMAGE_TAG} \
             ./frontend
 
-
-      # 5. Push backend në Docker Hub
+      # 6. Push backend
       - name: Push backend image
         run: |
           docker push \
-            ${{ vars.DOCKER_USERNAME }}/otto-coffee-backend:1.0
+            ${{ vars.DOCKER_USERNAME }}/enescoffe-backend:${IMAGE_TAG}
 
-
-      # 6. Push frontend në Docker Hub
+      # 7. Push frontend
       - name: Push frontend image
         run: |
           docker push \
-            ${{ vars.DOCKER_USERNAME }}/otto-coffee-frontend:1.0
+            ${{ vars.DOCKER_USERNAME }}/enescoffe-frontend:${IMAGE_TAG}
+
+      # 8. Përditëso Helm values.yaml
+      - name: Update Helm image tags
+        run: |
+          sed -i "s/tag: \"1.1\"/tag: \"${IMAGE_TAG}\"/" otto-coffee/values.yaml
+          sed -i "s/tag: \"1.2\"/tag: \"${IMAGE_TAG}\"/" otto-coffee/values.yaml
+
+      # 9. Commit dhe push values.yaml
+      - name: Commit Helm changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add otto-coffee/values.yaml
+
+          git diff --cached --quiet || git commit -m "Update Docker image tags to ${IMAGE_TAG}"
+
+          git push
