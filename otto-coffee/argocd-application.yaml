@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: otto-coffee
+  namespace: argocd
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/enessermaxhajj/ottocoffe.git
+    targetRevision: main
+    path: otto-coffee
+
+    helm:
+      releaseName: otto-coffee
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ottocoffee
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=true
