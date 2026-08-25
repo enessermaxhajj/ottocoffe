@@ -62,10 +62,20 @@ jobs:
       # 8. Përditëso Helm values.yaml
       - name: Update Helm image tags
         run: |
-          sed -i "s/tag: \"1.1\"/tag: \"${IMAGE_TAG}\"/" otto-coffee/values.yaml
-          sed -i "s/tag: \"1.2\"/tag: \"${IMAGE_TAG}\"/" otto-coffee/values.yaml
+          sed -i "/^backend:/,/^frontend:/ s/tag: \".*\"/tag: \"${IMAGE_TAG}\"/" otto-coffee/values.yaml
+          sed -i "/^frontend:/,/^postgres:/ s/tag: \".*\"/tag: \"${IMAGE_TAG}\"/" otto-coffee/values.yaml
 
-      # 9. Commit dhe push values.yaml
+      # 9. Kontrollo values.yaml
+      - name: Show updated image tags
+        run: |
+          echo "Updated Helm values:"
+          grep -A5 "^backend:" otto-coffee/values.yaml
+          echo ""
+          grep -A5 "^frontend:" otto-coffee/values.yaml
+          echo ""
+          grep -A5 "^postgres:" otto-coffee/values.yaml
+
+      # 10. Commit dhe push values.yaml
       - name: Commit Helm changes
         run: |
           git config user.name "github-actions[bot]"
@@ -73,6 +83,9 @@ jobs:
 
           git add otto-coffee/values.yaml
 
-          git diff --cached --quiet || git commit -m "Update Docker image tags to ${IMAGE_TAG}"
-
-          git push
+          if git diff --cached --quiet; then
+            echo "No Helm changes to commit."
+          else
+            git commit -m "Update Docker image tags to ${IMAGE_TAG}"
+            git push
+          fi
