@@ -25,3 +25,7 @@ spec:
 
           ports:
             - containerPort: {{ .Values.backend.service.targetPort }}
+
+          envFrom:
+            - secretRef:
+                name: postgres-secret
