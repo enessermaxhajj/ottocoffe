@@ -3,7 +3,7 @@ backend:
 
   image:
     repository: enessermaxhaj/enescoffe-backend
-    tag: "c409b09"
+    tag: "57078f8"
     pullPolicy: IfNotPresent
 
   service:
@@ -17,7 +17,7 @@ frontend:
 
   image:
     repository: enessermaxhaj/enescoffe-frontend
-    tag: "c409b09"
+    tag: "57078f8"
     pullPolicy: IfNotPresent
 
   service:
