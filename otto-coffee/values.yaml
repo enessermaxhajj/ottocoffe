@@ -3,7 +3,7 @@ backend:
 
   image:
     repository: enessermaxhaj/enescoffe-backend
-    tag: "b5f2227"
+    tag: "fe22e54"
     pullPolicy: IfNotPresent
 
   service:
@@ -17,7 +17,7 @@ frontend:
 
   image:
     repository: enessermaxhaj/enescoffe-frontend
-    tag: "b5f2227"
+    tag: "fe22e54"
     pullPolicy: IfNotPresent
 
   service:
