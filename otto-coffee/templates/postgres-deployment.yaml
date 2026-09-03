@@ -3,9 +3,10 @@ kind: Deployment
 
 metadata:
   name: postgres
+  namespace: ottocoffee
 
 spec:
-  replicas: {{ .Values.postgres.replicaCount }}
+  replicas: 1
 
   selector:
     matchLabels:
@@ -20,15 +21,15 @@ spec:
       containers:
         - name: postgres
 
-          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
-          imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
+          image: postgres:17
+          imagePullPolicy: IfNotPresent
 
           envFrom:
             - secretRef:
                 name: postgres-secret
 
           ports:
-            - containerPort: {{ .Values.postgres.service.targetPort }}
+            - containerPort: 5432
 
           volumeMounts:
             - name: postgres-storage
@@ -38,3 +39,4 @@ spec:
         - name: postgres-storage
           persistentVolumeClaim:
             claimName: postgres-pvc
+

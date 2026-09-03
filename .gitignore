@@ -9,3 +9,6 @@ node_modules/
 Thumbs.db
 
 npm-debug.log*
+
+# Kubernetes secrets
+k3s/secrets.yaml

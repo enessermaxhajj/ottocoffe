@@ -1,0 +1,34 @@
+- name: Install Argo CD
+  hosts: servers
+  become: yes
+
+  tasks:
+
+    - name: Create argocd namespace
+      command: k3s kubectl create namespace argocd
+      register: namespace_result
+      failed_when:
+        - namespace_result.rc != 0
+        - "'AlreadyExists' not in namespace_result.stderr"
+
+    - name: Install Argo CD
+      command: >
+        k3s kubectl apply
+        -n argocd
+        -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+    - name: Wait for Argo CD pods
+      command: k3s kubectl wait
+        --namespace argocd
+        --for=condition=Ready
+        pods
+        --all
+        --timeout=300s
+
+    - name: Show Argo CD pods
+      command: k3s kubectl get pods -n argocd
+      register: argocd_pods
+
+    - name: Display Argo CD pods
+      debug:
+        var: argocd_pods.stdout

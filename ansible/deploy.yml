@@ -1,0 +1,21 @@
+- name: Deploy Eness Coffee
+  hosts: servers
+  become: yes
+
+  tasks:
+
+    - name: Create application directory
+      file:
+        path: /opt/eness-coffee
+        state: directory
+        mode: '0755'
+
+    - name: Copy application
+      copy:
+        src: ./
+        dest: /opt/eness-coffee/
+
+    - name: Start application
+      command: docker compose up -d
+      args:
+        chdir: /opt/eness-coffee
